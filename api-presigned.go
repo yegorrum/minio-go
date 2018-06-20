@@ -71,6 +71,26 @@ func (c Client) PresignedGetObject(bucketName string, objectName string, expires
 	return c.presignURL("GET", bucketName, objectName, expires, reqParams)
 }
 
+func (c Client) ConstPresignedGetObject(bucketName string, objectName string, reqParams url.Values) (u *url.URL, err error) {
+	if err = s3utils.CheckValidObjectName(objectName); err != nil {
+		return nil, err
+	}
+	
+	// Fetch the bucket location.
+	location, err := c.getBucketLocation(bucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	isVirtualHost := c.isVirtualHostStyleRequest(*c.endpointURL, bucketName)
+
+	u, err = c.makeTargetURL(bucketName, objectName, location, isVirtualHost, nil)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
 // PresignedHeadObject - Returns a presigned URL to access object
 // metadata without credentials. URL can have a maximum expiry of
 // upto 7days or a minimum of 1sec. Additionally you can override
